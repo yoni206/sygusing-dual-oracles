@@ -1,0 +1,58 @@
+(set-logic ALL)
+(set-option :lang sygus2)
+(set-option :sygus-abort-size 5)
+
+; type S
+; mutable relation f
+; mutable relation u(S)
+; init f & forall X. !u(x)
+; transition trans1(x: S)
+;   # insert element into u, changing f from true to false
+;   modifies f, u
+;   f & !new(f) & forall Y. new(u(Y)) <-> (u(Y) | Y = x)
+; transition trans2(x: S)
+;   # remove element from u, setting f to true
+;   modifies f, u
+;   new(f) &  forall Y. new(u(Y)) <-> (u(Y) & Y != x)
+; invariant [safety] forall X,Y. u(X) & u(Y) -> X = Y
+; invariant forall X. u(X) -> !f
+
+(declare-sort S 0)
+(declare-var f Bool)
+(declare-var u (Set S))
+(declare-var new_f Bool)
+(declare-var new_u (Set S))
+
+(define-fun init ((f Bool) (u (Set S))) Bool (and f (= u (as emptyset (Set S)))))
+
+(define-fun trans1 ((f Bool) (u (Set S)) (new_f Bool) (new_u (Set S))) Bool (and f (not new_f) (<= (card new_u) (+ (card u) 1))))
+
+(define-fun trans2 ((f Bool) (u (Set S)) (new_f Bool) (new_u (Set S))) Bool (and new_f (= (card new_u) (- (card u) 1))))
+
+(define-fun safe ((f Bool) (u (Set S))) Bool (<= (card u) 1))
+
+
+
+(synth-fun inv_matrix ((f Bool) (u (Set S))) Bool 
+   ((B Bool))
+   (
+     (B Bool (
+     (or B B)
+     (and B B)
+     (not B) 
+     f
+     (= (card u) 0)
+     (= (card u) 1)
+   )) 
+))
+
+
+
+(define-fun inv ((f Bool) (u (Set S))) Bool (and (inv_matrix f u)))
+
+(constraint (=> (init f u) (inv f u)))
+(constraint (=> (and (inv f u) (trans1 f u new_f new_u)) (inv new_f new_u)))
+(constraint (=> (and (inv f u) (trans2 f u new_f new_u)) (inv new_f new_u)))
+(constraint (=> (inv f u) (safe f u)))
+
+(check-synth)

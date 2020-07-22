@@ -1,0 +1,41 @@
+; EXPECT: unsat
+; COMMAND-LINE: --sygus-out=status --sygus-repair-const
+(set-logic ALL)
+
+(declare-sort S 0)
+(declare-var u (-> S Bool))
+
+(synth-fun inv ((f Bool) (x S)) Bool
+(
+(Start Bool (
+  f
+  (u StartS)
+  (not Start)
+  (and Start Start)
+))
+(StartS S (
+  x
+)
+)))
+
+(define-fun pre ((f Bool) (u (-> S Bool))) Bool
+(and f (forall ((x S)) (not (u x)))))
+(define-fun trans ((f Bool) (fp Bool)) Bool
+(and  (= fp f) ))
+
+(define-fun post ((f Bool) (u (-> S Bool))) Bool
+(and f (forall ((x S)) (not (u x))))
+)
+
+(declare-var f Bool)
+(declare-var fp Bool)
+(declare-var u (-> S Bool))
+(declare-var up (-> S Bool))
+
+(constraint (=> (pre f u) (forall ((x S)) (inv f x))))
+;(constraint (=> (and (forall ((x S)) (inv f t x)) (trans f t fp tp)) (forall ((x S)) (inv fp tp x))))
+(constraint (=> (forall ((x S)) (inv f x)) (post f u)))
+
+; needs --sygus-repair-const, since easy solution involves the constant 4608
+
+(check-synth)

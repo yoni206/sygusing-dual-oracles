@@ -1,0 +1,2 @@
+; an enumeration datatype
+(declare-datatype S ( ( s1 ) ( s2 ) ( s3 ) ))

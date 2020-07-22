@@ -1,0 +1,138 @@
+(set-logic ALL)
+(set-option :uf-ho true)
+(set-option :lang sygus2)
+(set-option :sygus-abort-size 5)
+
+
+(declare-sort node 0)
+(declare-sort value 0)
+(declare-sort quorum 0)
+(declare-sort round 0)
+
+(declare-var none round)
+(declare-var le (-> round (-> round Bool)))
+(declare-var mem (-> node (-> quorum Bool)))
+
+(declare-var one_a (-> round Bool))
+(declare-var one_b (-> node (-> round Bool)))
+(declare-var left_round (-> node (-> round Bool)))
+(declare-var proposal (-> round (-> value Bool)))
+(declare-var vote (-> node (-> round (-> value Bool))))
+(declare-var decision (-> round (-> value Bool)))
+
+(declare-var decision_quorum (-> round (-> value quorum)))
+(declare-var choosable_node (-> round (-> value (-> quorum node))))
+
+
+
+(define-fun goal (
+(none round)
+(le (-> round (-> round Bool)))
+(mem (-> node (-> quorum Bool)))
+(one_a (-> round Bool))
+(one_b (-> node (-> round Bool)))
+(left_round (-> node (-> round Bool)))
+(proposal (-> round (-> value Bool)))
+(vote (-> node (-> round (-> value Bool))))
+(decision (-> round (-> value Bool)))
+(decision_quorum (-> round (-> value quorum)))
+(choosable_node (-> round (-> value (-> quorum node))))) Bool 
+(forall ((R1 round) (R2 round) (V1 value) (V2 value) (Q quorum) (N node)) 
+(=>
+(and 
+(not (le R2 R1))
+(proposal R2 V2)
+(distinct V1 V2)
+(= N (choosable_node R1 V1 Q))
+)
+
+(and 
+(mem N Q)
+(left_round N R1)
+(not (vote N R1 V1))
+)
+)
+))
+
+(synth-fun inv_matrix 
+(
+  (none round)
+  (le (-> round (-> round Bool)))
+  (mem (-> node (-> quorum Bool)))
+  (one_a (-> round Bool))
+  (one_b (-> node (-> round Bool)))
+  (left_round (-> node (-> round Bool)))
+  (proposal (-> round (-> value Bool)))
+  (vote (-> node (-> round (-> value Bool))))
+  (decision (-> round (-> value Bool)))
+  (decision_quorum (-> round (-> value quorum)))
+  (choosable_node (-> round (-> value (-> quorum node))))
+  (R1 round) 
+  (R2 round) 
+  (V1 value) 
+  (V2 value) 
+  (Q quorum) 
+  (N node)
+) Bool 
+   (
+     (B Bool) 
+     (QG quorum) 
+     (NG node) 
+     (RG round) 
+     (VG value)
+  )
+(
+(B Bool (
+(or B B)
+(and B B)
+(not B)
+(le RG RG)
+(mem NG QG)
+(one_a RG)
+(one_b NG RG)
+(left_round NG RG)
+(proposal RG VG)
+(vote NG RG VG)
+(decision RG VG)
+))
+(QG quorum (
+Q
+(decision_quorum RG VG)
+)) 
+(NG node (
+N
+(choosable_node RG VG QG)
+))
+(RG round (
+R1
+R2
+))
+(VG value (
+V1 V2
+))
+))
+
+
+(define-fun inv (
+  (none round)
+  (le (-> round (-> round Bool)))
+  (mem (-> node (-> quorum Bool)))
+  (one_a (-> round Bool))
+  (one_b (-> node (-> round Bool)))
+  (left_round (-> node (-> round Bool)))
+  (proposal (-> round (-> value Bool)))
+  (vote (-> node (-> round (-> value Bool))))
+  (decision (-> round (-> value Bool)))
+  (decision_quorum (-> round (-> value quorum)))
+  (choosable_node (-> round (-> value (-> quorum node))))
+) Bool
+(forall ((R1 round) (R2 round) (V1 value) (V2 value) (Q quorum) (N node)) 
+(inv_matrix none le mem one_a one_b left_round proposal vote decision decision_quorum choosable_node R1 R2 V1 V2 Q N))
+)
+
+(constraint (= 
+(inv none le mem one_a one_b left_round proposal vote decision decision_quorum choosable_node)  
+(goal none le mem one_a one_b left_round proposal vote decision decision_quorum choosable_node)  
+))
+
+(check-synth)

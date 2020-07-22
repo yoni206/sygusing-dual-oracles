@@ -1,0 +1,17 @@
+(set-logic ALL)
+(declare-sort S 0)
+(synth-fun inv ((f Bool) (u (-> S Bool))) Bool)
+(define-fun pre ((f Bool) (u (-> S Bool))) Bool (and f (forall ((x S)) (not (u x)))))
+
+(define-fun trans ((f Bool) (u (-> S Bool)) (fp Bool) (up (-> S Bool))) Bool (and  (= fp f) (= u up)))
+
+(define-fun post ((f Bool) (u (-> S Bool))) Bool (and f (forall ((x S)) (not (u x)))))
+
+(declare-var f Bool)
+(declare-var u (-> S Bool))
+(declare-var s S)
+
+(constraint (=> (pre f u) (inv f u)))
+(constraint (=> (inv f u) (post f u)))
+
+(check-synth)

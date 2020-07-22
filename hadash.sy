@@ -1,0 +1,65 @@
+(set-logic ALL)
+(declare-sort S 0)
+(synth-fun inv_matrix ((f Bool) (u (-> S Bool)) (x S)) Bool 
+(
+   (Start Bool (
+   (or (not (u x)) (not f))
+;     f
+;     (u StartS)
+;     (and Start Start)
+;     (or Start Start)
+;     (not Start)
+   ))
+   (StartS S ( x ))
+)
+
+)
+
+
+; type S
+; mutable relation f
+; mutable relation u(S)
+; init f & forall X. !u(x)
+; transition trans1(x: S)
+;   # insert element into u, changing f from true to false
+;   modifies f, u
+;   f & !new(f) & forall Y. new(u(Y)) <-> (u(Y) | Y = x)
+; transition trans2(x: S)
+;   # remove element from u, setting f to true
+;   modifies f, u
+;   new(f) &  forall Y. new(u(Y)) <-> (u(Y) & Y != x)
+; invariant [safety] forall X,Y. u(X) & u(Y) -> X = Y
+; invariant forall X. u(X) -> !f
+
+(define-fun pre ((f Bool) (u (-> S Bool))) Bool (and f (forall ((x S)) (not (u x)))))
+
+;(define-fun trans ((f Bool) (u (-> S Bool)) (fp Bool) (up (-> S Bool))) Bool (and  (= fp f) (= u up)))
+
+(define-fun trans1 ((f Bool) (u (-> S Bool)) (ftag Bool) (utag (-> S Bool))) Bool 
+    (and 
+      f 
+      (not ftag) 
+      (exists ((x S)) (forall ((y S)) (= (utag y) (or (u y) (= y x))))) 
+    )
+)
+(define-fun trans2 ((f Bool) (u (-> S Bool)) (ftag Bool) (utag (-> S Bool))) Bool 
+    (and 
+      ftag
+      (exists ((x S)) (forall ((y S)) (= (utag y) (and (u y) (distinct y x))))) 
+    )
+  )
+
+(define-fun post ((f Bool) (u (-> S Bool))) Bool (forall ((x S) (y S)) (=> (and (u x) (u y)) (= x y))))
+
+(define-fun inv ((f Bool) (u (-> S Bool))) Bool (and (forall ((x S)) (inv_matrix f u x)) (post f u)))
+
+(declare-var f Bool)
+(declare-var u (-> S Bool))
+(declare-var ftag Bool)
+(declare-var utag (-> S Bool))
+
+(constraint (=> (pre f u) (inv f u)))
+;(constraint (=> (and (inv f u) (trans1 f u ftag utag)) (inv ftag utag)))
+(constraint (=> (and (inv f u) (trans2 f u ftag utag)) (inv ftag utag)))
+
+(check-synth)
