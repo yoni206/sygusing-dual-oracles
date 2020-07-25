@@ -1,10 +1,7 @@
 (set-logic ALL)
 (set-option :uf-ho true)
-<<<<<<< HEAD
-=======
 (set-option :produce-models true)
 (set-option :lang smt2)
->>>>>>> triangle example with smt2, including partial models
 
 ; The structures from Figure 1 of the PLDI 2020 paper (left to right, top to bottom; 1-5 are +, 6-9 are -)
 
@@ -82,12 +79,6 @@
 (define-fun E9 ((u V) (v V)) Bool (or (E9c u v) (E9c v u)))
 
 ; evaluating a matrix where the prefix is forall X,Y. exists Z.
-<<<<<<< HEAD
-
-(define-fun matrix ((U (-> V Bool)) (E (-> V (-> V Bool))) (x V) (y V) (z V)) Bool 
-            (=> (E x y) (and (E x z) (E y z)))
-)
-=======
 ; search for a matrix with 2 CNF clauses over the literals: e(X,Y) ~e(X,Y) e(X,Z) ~e(X,Z) e(Y,Z) ~e(Y,Z)
 (declare-fun x11 () Bool)
 (declare-fun x12 () Bool)
@@ -105,27 +96,12 @@
     (or (and x11 (E x y)) (and x12 (not (E x y))) (and x13 (E x z)) (and x14 (not (E x z))) (and x15 (E y z)) (and x16 (not (E y z))))
     (or (and x21 (E x y)) (and x22 (not (E x y))) (and x23 (E x z)) (and x24 (not (E x z))) (and x25 (E y z)) (and x26 (not (E y z))))
 ))
->>>>>>> triangle example with smt2, including partial models
 
 (define-fun eval ((U (-> V Bool)) (E (-> V (-> V Bool)))) Bool (
     forall ((x V) (y V)) (=> (and (U x) (U y)) (exists ((z V)) (and (U z) (matrix U E x y z))))
 ))
 
 ; structures 1-5 are positive, 6-9 are negative
-<<<<<<< HEAD
-(assert (or 
-  (not (eval V1 E1))
-  (not (eval V2 E2))
-  (not (eval V3 E3))
-  (not (eval V4 E4))
-  (not (eval V5 E5))
-  (not (not (eval V6 E6)))
-  (not (not (eval V7 E7)))
-  (not (not (eval V8 E8)))
-  (not (not (eval V9 E9)))))
-
-(check-sat)
-=======
 (assert (eval V1 E1))
 (assert (eval V2 E2))
 (assert (eval V3 E3))
@@ -138,4 +114,3 @@
 
 (check-sat)
 (get-model)
->>>>>>> triangle example with smt2, including partial models
