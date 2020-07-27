@@ -1,10 +1,7 @@
 (set-logic ALL)
 (set-option :uf-ho true)
-<<<<<<< HEAD
-=======
 (set-option :produce-models true)
 (set-option :lang smt2)
->>>>>>> triangle example with smt2, including partial models
 
 ; The structures from Figure 1 of the PLDI 2020 paper (left to right, top to bottom; 1-5 are +, 6-9 are -)
 
