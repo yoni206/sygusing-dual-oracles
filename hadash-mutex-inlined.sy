@@ -33,7 +33,7 @@
             (or B B)
             (and B B)
             (not B)
-            (ite B B B)
+            (ite B B B) ; this seems to make it slower here (opposite of hadash-mutex.sy)
         ))
         (SG S (
             x

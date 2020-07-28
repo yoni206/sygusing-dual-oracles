@@ -30,27 +30,26 @@
 
 
 (synth-fun inv_matrix ((f Bool) (u (-> S Bool)) (x S) (y S)) Bool
-   ((B Bool) (SG S))
-   (
-     (B Bool (
-;     (and (=> (and (u x) (u y)) (= x y)) (=> f (not (u x))))
-     (or B B)
-     (and B B)
-     (not B)
-     f
-     (u SG)
-     (= SG SG)
-     (ite B B B)
-   ))
-   (SG S (
-     x
-     y
-   ))
+    ((B Bool) (SG S))
+    (
+        (B Bool (
+            ; (and (=> (and (u x) (u y)) (= x y)) (=> f (not (u x)))) ; this is the solution
+            f
+            (u SG)
+            (= SG SG)
+            (or B B)
+            (and B B)
+            (not B)
+            (ite B B B) ; without ite this file doesn't synthesize (returns unknown), oppositve of hadash-mutex-inlined.sy
+        ))
+        (SG S (
+            x
+            y
+        ))
+    )
+)
 
-))
 
-
-;(define-fun inv ((f Bool) (u (-> S Bool))) Bool (and (forall ((x S)) (inv_matrix f u x)) (safe f u)))
 (define-fun inv ((f Bool) (u (-> S Bool))) Bool (forall ((x S) (y S)) (inv_matrix f u x y)) )
 
 
