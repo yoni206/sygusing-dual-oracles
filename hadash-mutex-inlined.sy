@@ -1,0 +1,103 @@
+(set-logic ALL)
+(set-option :uf-ho true)
+(set-option :lang sygus2)
+;(set-option :sygus-abort-size 5)
+
+; type S
+; mutable relation f
+; mutable relation u(S)
+; init: f & forall X. !u(x)
+; transition trans1:
+;   # insert element into u, changing f from true to false
+;   modifies f, u
+;   f & !new(f) & exists x.forall Y. new(u(Y)) <-> (u(Y) | Y = x)
+; transition trans2:
+;   # remove element from u, setting f to true
+;   modifies f, u
+;   new(f) &  exists x. u(x) & forall Y. new(u(Y)) <-> (u(Y) & Y != x)
+; invariant [safety] forall X,Y. u(X) & u(Y) -> X = Y
+; invariant forall X. u(X) -> !f
+
+(declare-sort S 0)
+
+
+(synth-fun inv_matrix ((f Bool) (ux Bool) (uy Bool) (x S) (y S)) Bool
+    ((B Bool) (SG S))
+    (
+        (B Bool (
+            ; (and (=> (and (ux) (uy)) (= x y)) (=> f (not (ux)))) ; this is the solution
+            f
+            ux
+            uy
+            (= SG SG)
+            (or B B)
+            (and B B)
+            (not B)
+            (ite B B B)
+        ))
+        (SG S (
+            x
+            y
+        )
+   )
+)
+
+
+(declare-var f Bool)
+(declare-var u (-> S Bool))
+(declare-var new_f Bool)
+(declare-var new_u (-> S Bool))
+;
+; ODED: I think it really should be the following:
+; (declare-fun f () Bool)
+; (declare-fun u (S) Bool)
+; (declare-fun new_f () Bool)
+; (declare-fun new_u (S) Bool)
+
+
+; init => inv
+(constraint (=>
+    ; (init f u)
+    (and f (forall ((x S)) (not (u x))))
+
+    (forall ((x S) (y S)) (inv_matrix f u x y))
+))
+
+; inv /\ trans1 => inv'
+(constraint (=> (and
+    ; (inv f u)
+    (forall ((x S) (y S)) (inv_matrix f u x y))
+
+    ; (trans1 f u new_f new_u)
+    (and f (not new_f) (exists ((x S)) (forall ((y S)) (= (new_u y) (or (u y) (= y x))))))
+
+    )
+
+    ; (inv new_f new_u)
+    (forall ((x S) (y S)) (inv_matrix new_f new_u x y))
+))
+
+; inv /\ trans2 => inv'
+(constraint (=> (and
+    ; (inv f u)
+    (forall ((x S) (y S)) (inv_matrix f u x y))
+
+    ; (trans2 f u new_f new_u)
+    (and new_f (exists ((x S)) (and (u x) (forall ((y S)) (= (new_u y) (and (u y) (distinct y x)))))))
+
+    )
+
+    ; (inv new_f new_u)
+    (forall ((x S) (y S)) (inv_matrix new_f new_u x y))
+))
+
+; inv => safe
+(constraint (=>
+    ; (inv f u)
+    (forall ((x S) (y S)) (inv_matrix f u x y))
+
+    ; (safe f u)
+    (forall ((x S) (y S)) (=> (and (u x) (u y)) (= x y)))
+))
+
+(check-synth)
