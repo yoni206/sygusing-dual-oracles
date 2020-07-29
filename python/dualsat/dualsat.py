@@ -18,7 +18,7 @@ def create_definition(var, clauses, current_largest_variable_id):
   result = [ltr] + [rtl] + clauses_definitions_ltr + clauses_definitions_rtl
   return counter, result
   
-proof_size = 35
+proof_size = int(sys.argv[2])
 
 path = sys.argv[1]
 formula = CNF(from_file=path)
@@ -306,13 +306,15 @@ for k in definitions:
 
 formulas.append([[bottom_proved]])
 formulas.append([[legal_proof]])
-print("starting to solve")
 s1 = Solver(name='cadical')
 for f in formulas:
   for c in f:
       s1.add_clause(c)
 result = s1.solve()
-print(result)
+if result:
+  print("found a proof of size <= ", str(proof_size))
+else:
+  print("no proof of size <= ", str(proof_size))
 if result:
   m = s1.get_model()
   with open("model.txt", "w") as f:
@@ -320,4 +322,7 @@ if result:
   with open("vars.txt", "w") as f:
     f.write("\n".join([str(k) + ": " + vars_desc[k] for k in vars_desc]))
   mm = [(i,j,k) for i in range(0,proof_size) for j in range(1, largest_variable_id+1) for k in range(0,2) if proof[(i,j,k)] in m]
+  print("here it is:")
   print(mm)
+  print("how to read this proof?")
+  print("(i,j,1) means that original variable j occurs in the ith clause of the proof positively.\n(i,j,0) means that original variable j occurs in the ith clause of the proof negatively.")
