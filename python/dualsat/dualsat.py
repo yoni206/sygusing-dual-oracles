@@ -18,7 +18,7 @@ def create_definition(var, clauses, current_largest_variable_id):
   result = [ltr] + [rtl] + clauses_definitions_ltr + clauses_definitions_rtl
   return counter, result
   
-proof_size = 5
+proof_size = 35
 
 path = sys.argv[1]
 formula = CNF(from_file=path)
@@ -35,10 +35,12 @@ number_of_clauses = len(formula.clauses)
 # positively (if j=1).
 proof = {}
 counter = 1
+vars_desc = {}
 for i in range(0, proof_size):
   for j in range(1, largest_variable_id + 1):
     for k in range(0,2):
       proof[(i,j,k)] = counter
+      vars_desc[counter] = "proof " + str(i) + " " + str(j) + " " + str(k)
       counter = counter + 1
 
 # original[i] is a new variable that says that the ith clause of the proof
@@ -46,6 +48,7 @@ for i in range(0, proof_size):
 original = {}
 for i in range(0, proof_size):
   original[i] = counter
+  vars_desc[counter] = "original " + str(i)
   counter = counter+1
 
 # copy_of[(i,m)] is a new variable that says that the ith clause of the proof
@@ -54,6 +57,7 @@ copy_of = {}
 for i in range(0, proof_size):
   for m in range(0, number_of_clauses):
     copy_of[(i,m)] = counter
+    vars_desc[counter] = "copy_of " + str(i) + " " + str(m)
     counter = counter + 1
 
 # subclause_of[(i,m)] is a new variable that says that the ith clause of the proof
@@ -62,6 +66,7 @@ subclause_of = {}
 for i in range(0, proof_size):
   for m in range(0, number_of_clauses):
     subclause_of[(i,m)] = counter
+    vars_desc[counter] = "subclause_of " + str(i) + " " + str(m)
     counter = counter + 1
 
 # superclause_of[(i,m)] is a new variable that says that the ith clause of the proof
@@ -70,6 +75,7 @@ superclause_of = {}
 for i in range(0, proof_size):
   for m in range(0, number_of_clauses):
     superclause_of[(i,m)] = counter
+    vars_desc[counter] = "superclause_of " + str(i) + " " + str(m)
     counter = counter + 1
 
 # pos_subclause_of[(i,m)] is a new variable that says that every positive literal
@@ -79,6 +85,7 @@ pos_subclause_of = {}
 for i in range(0, proof_size):
   for m in range(0, number_of_clauses):
     pos_subclause_of[(i,m)] = counter
+    vars_desc[counter] = "pos_subclause_of " + str(i) + " " + str(m)
     counter = counter + 1
 #TODO the problem is with var 52 that says that the 0 clause of the proof is a positive subclause of the 0 clause of the original formula
 
@@ -89,6 +96,7 @@ neg_subclause_of = {}
 for i in range(0, proof_size):
   for m in range(0, number_of_clauses):
     neg_subclause_of[(i,m)] = counter
+    vars_desc[counter] = "neg_subclause_of " + str(i) + " " + str(m)
     counter = counter + 1
 
 # pos_superclause_of[(i,m)] is a new variable that says that every positive literal
@@ -98,6 +106,7 @@ pos_superclause_of = {}
 for i in range(0, proof_size):
   for m in range(0, number_of_clauses):
     pos_superclause_of[(i,m)] = counter
+    vars_desc[counter] = "pos_superclause_of " + str(i) + " " + str(m)
     counter = counter + 1
 
 # neg_superclause_of[(i,m)] is a new variable that says that every negative literal
@@ -107,6 +116,7 @@ neg_superclause_of = {}
 for i in range(0, proof_size):
   for m in range(0, number_of_clauses):
     neg_superclause_of[(i,m)] = counter
+    vars_desc[counter] = "neg_superclause_of " + str(i) + " " + str(m)
     counter = counter + 1
  
 # resolution[i] is a new variable that says that the ith clause of the proof
@@ -114,15 +124,18 @@ for i in range(0, proof_size):
 resolution = {}
 for i in range(0, proof_size):
   resolution[i] = counter
+  vars_desc[counter] = "resolution " + str(i)
   counter = counter+1
 
 # resolvant[(i,j,k)] is a new variable that says that the ith clause of the proof
-# is the resolvant of the jth and kth clauses of the proof
+# is the resolvants of the jth and kth clauses of the proof, and
+# they came earlier
 resolvant = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       resolvant[(i,j,k)] = counter
+      vars_desc[counter] = "resolvant " + str(i) + " " + str(j) + " " + str(k)
       counter = counter+1
 
 # pivot[(i,j,k,l)] is a new variable that says that the ith clause of the proof
@@ -130,31 +143,42 @@ for i in range(0, proof_size):
 # and that the pivot is the original variable l
 pivot = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       for l in range(1, largest_variable_id+1):
         pivot[(i,j,k,l)]=counter
+        vars_desc[counter] = "pivot " + str(i) + " " + str(j) + " " + str(k) + " " + str(l)
         counter = counter+1
+
+var_is_pivot = {}
+for j in range(0, proof_size):
+  for k in range(0, j):
+    for l in range(1, largest_variable_id + 1):
+      var_is_pivot[(j,k,l)] = counter
+      vars_desc[counter] = "var_is_pivot " + str(j) + " " + str(k) + " " + str(l)
+      counter = counter+1
 
 # pivot_superclause_of[(i,j,k,l)] is a new variable that says that every literal
 # that occurs in either the jth or kth clauses of the proof that is different
 # from l and from ~l, occurs also in the ith clause of the proof
 pivot_superclause_of = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       for l in range(1, largest_variable_id+1):
         pivot_superclause_of[(i,j,k,l)]=counter
+        vars_desc[counter] = "pivot_superclause_of " + str(i) + " " + str(j) + " " + str(k) + " " + str(l)
         counter = counter+1
 
 # pivot_subclause_of[(i,j,k,l)] is a new variable that says that every literal
 # that occurs in ith clause of the proof is also occurs in either the jth or kth clauses of the proof, and is different than l and ~l.
 pivot_subclause_of = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       for l in range(1, largest_variable_id+1):
         pivot_subclause_of[(i,j,k,l)]=counter
+        vars_desc[counter] = "pivot_subclause_of " + str(i) + " " + str(j) + " " + str(k) + " " + str(l)
         counter = counter+1
 
 # pivot_superclause_of[(i,j,k,l)] is a new variable that says that every positive literal
@@ -162,20 +186,22 @@ for i in range(0, proof_size):
 # from l and ~l, occurs also in the ith clause of the proof
 pivot_pos_superclause_of = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       for l in range(1, largest_variable_id+1):
         pivot_pos_superclause_of[(i,j,k,l)]=counter
+        vars_desc[counter] = "pivot_pos_superclause_of " + str(i) + " " + str(j) + " " + str(k) + " " + str(l)
         counter = counter+1
 
 # pivot_subclause_of[(i,j,k,l)] is a new variable that says that every positive literal
 # that occurs in ith clause of the proof is also occurs in either the jth or kth clauses of the proof, and is different than l and ~l.
 pivot_pos_subclause_of = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       for l in range(1, largest_variable_id+1):
         pivot_pos_subclause_of[(i,j,k,l)]=counter
+        vars_desc[counter] = "pivot_pos_subclause_of " + str(i) + " " + str(j) + " " + str(k) + " " + str(l)
         counter = counter+1
 
 # pivot_superclause_of[(i,j,k,l)] is a new variable that says that every negative literal
@@ -183,20 +209,22 @@ for i in range(0, proof_size):
 # from l and ~l, occurs also in the ith clause of the proof
 pivot_neg_superclause_of = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       for l in range(1, largest_variable_id+1):
         pivot_neg_superclause_of[(i,j,k,l)]=counter
+        vars_desc[counter] = "pivot_neg_superclause_of " + str(i) + " " + str(j) + " " + str(k) + " " + str(l)
         counter = counter+1
 
 # pivot_subclause_of[(i,j,k,l)] is a new variable that says that every negative literal
 # that occurs in ith clause of the proof is also occurs in either the jth or kth clauses of the proof, and is different than l and ~l.
 pivot_neg_subclause_of = {}
 for i in range(0, proof_size):
-  for j in range(0, proof_size):
-    for k in range(0, proof_size):
+  for j in range(0, i):
+    for k in range(0, j):
       for l in range(1, largest_variable_id+1):
         pivot_neg_subclause_of[(i,j,k,l)]=counter
+        vars_desc[counter] = "pivot_neg_subclause_of " + str(i) + " " + str(j) + " " + str(k) + " " + str(l)
         counter = counter+1
 
 # bottom_at[i] is a new variable that says that the ith clause of the proof
@@ -204,12 +232,15 @@ for i in range(0, proof_size):
 bottom_at = {}
 for i in range(0, proof_size):
   bottom_at[i] = counter
+  vars_desc[counter] = "bottom_at " + str(i)
   counter = counter+1
 
 bottom_proved = counter
+vars_desc[counter] = "bottom_proved"
 counter = counter+1
 
 legal_proof = counter
+vars_desc[counter] = "legal_proof"
 counter = counter+1
 
 ##############################
@@ -230,7 +261,8 @@ def_neg_superclause_of = {(i,m): [[proof[(i,j,0)]] for j in range(1, largest_var
 
 def_resolution = {i: [[resolvant[(i,j,k)] for j in range(0, i) for k in range(0,j)]] for i in range(0, proof_size)}
 def_resolvant = {(i,j,k): [[pivot[(i,j,k,l)] for l in range(1, largest_variable_id+1) ]] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j)}
-def_pivot = {(i,j,k,l): [[pivot_subclause_of[(i,j,k,l)]], [pivot_superclause_of[(i,j,k,l)]]] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)}
+def_pivot = {(i,j,k,l): [[pivot_subclause_of[(i,j,k,l)]], [pivot_superclause_of[(i,j,k,l)]], [var_is_pivot[(j,k,l)]]] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)}
+def_var_is_pivot = {(j,k,l): [[proof[(j,l,1)],proof[(j,l,0)]], [proof[(k,l,0)],proof[(j,l,0)]], [proof[(j,l,1)],proof[(k,l,1)]], [proof[(k,l,0)],proof[(k,l,1)]]] for j in range(0, proof_size) for k in range(0,j) for l in range(1, largest_variable_id+1)}
 def_pivot_superclause_of = {(i,j,k,l): [[pivot_pos_superclause_of[(i,j,k,l)]], [pivot_neg_superclause_of[i,j,k,l]]] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)}
 def_pivot_subclause_of = {(i,j,k,l): [[pivot_pos_subclause_of[(i,j,k,l)]], [pivot_neg_subclause_of[i,j,k,l]]] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)}
 def_pivot_pos_superclause_of = {(i,j,k,l): [[-proof[(j,m,1)],proof[(i,m,1)]] for m in range(1, largest_variable_id+1) if abs(m) != l] + [[-proof[(k,m,1)],proof[(i,m,1)]] for m in range(1, largest_variable_id+1) if abs(m) != l] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)}
@@ -255,6 +287,7 @@ definitions.update({neg_superclause_of[(i,m)]: def_neg_superclause_of[(i,m)] for
 definitions.update({resolution[i]: def_resolution[i] for i in range(0, proof_size)})
 definitions.update({resolvant[(i,j,k)]: def_resolvant[(i,j,k)] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j)})
 definitions.update({pivot[(i,j,k,l)]: def_pivot[(i,j,k,l)] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)})
+definitions.update({var_is_pivot[(j,k,l)]: def_var_is_pivot[(j,k,l)] for j in range(0, proof_size) for k in range(0,j) for l in range(1, largest_variable_id+1)})
 definitions.update({pivot_superclause_of[(i,j,k,l)]: def_pivot_superclause_of[(i,j,k,l)] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)})
 definitions.update({pivot_subclause_of[(i,j,k,l)]: def_pivot_subclause_of[(i,j,k,l)] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)})
 definitions.update({pivot_pos_superclause_of[(i,j,k,l)]: def_pivot_pos_superclause_of[(i,j,k,l)] for i in range(0, proof_size) for j in range(0,i) for k in range(0,j) for l in range(1, largest_variable_id+1)})
@@ -273,8 +306,8 @@ for k in definitions:
 
 formulas.append([[bottom_proved]])
 formulas.append([[legal_proof]])
-
-s1 = Solver(name='g3')
+print("starting to solve")
+s1 = Solver(name='cadical')
 for f in formulas:
   for c in f:
       s1.add_clause(c)
@@ -282,5 +315,9 @@ result = s1.solve()
 print(result)
 if result:
   m = s1.get_model()
-  mm = [(i,j,k) for i in range(0,proof_size) for j in range(1, largest_variable_id) for k in range(0,2) if proof[(i,j,k)] in m]
+  with open("model.txt", "w") as f:
+    f.write(str(m))
+  with open("vars.txt", "w") as f:
+    f.write("\n".join([str(k) + ": " + vars_desc[k] for k in vars_desc]))
+  mm = [(i,j,k) for i in range(0,proof_size) for j in range(1, largest_variable_id+1) for k in range(0,2) if proof[(i,j,k)] in m]
   print(mm)
