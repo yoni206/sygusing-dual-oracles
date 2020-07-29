@@ -33,12 +33,12 @@
             (or B B)
             (and B B)
             (not B)
-            (ite B B B)
+            (ite B B B) ; this seems to make it slower here (opposite of hadash-mutex.sy)
         ))
         (SG S (
             x
             y
-        )
+        ))
    )
 )
 
@@ -60,13 +60,13 @@
     ; (init f u)
     (and f (forall ((x S)) (not (u x))))
 
-    (forall ((x S) (y S)) (inv_matrix f u x y))
+    (forall ((x S) (y S)) (inv_matrix f (u x) (u y) x y))
 ))
 
 ; inv /\ trans1 => inv'
 (constraint (=> (and
     ; (inv f u)
-    (forall ((x S) (y S)) (inv_matrix f u x y))
+    (forall ((x S) (y S)) (inv_matrix f (u x) (u y) x y))
 
     ; (trans1 f u new_f new_u)
     (and f (not new_f) (exists ((x S)) (forall ((y S)) (= (new_u y) (or (u y) (= y x))))))
@@ -74,13 +74,13 @@
     )
 
     ; (inv new_f new_u)
-    (forall ((x S) (y S)) (inv_matrix new_f new_u x y))
+    (forall ((x S) (y S)) (inv_matrix new_f (new_u x) (new_u y) x y))
 ))
 
 ; inv /\ trans2 => inv'
 (constraint (=> (and
     ; (inv f u)
-    (forall ((x S) (y S)) (inv_matrix f u x y))
+    (forall ((x S) (y S)) (inv_matrix f (u x) (u y) x y))
 
     ; (trans2 f u new_f new_u)
     (and new_f (exists ((x S)) (and (u x) (forall ((y S)) (= (new_u y) (and (u y) (distinct y x)))))))
@@ -88,13 +88,13 @@
     )
 
     ; (inv new_f new_u)
-    (forall ((x S) (y S)) (inv_matrix new_f new_u x y))
+    (forall ((x S) (y S)) (inv_matrix new_f (new_u x) (new_u y) x y))
 ))
 
 ; inv => safe
 (constraint (=>
     ; (inv f u)
-    (forall ((x S) (y S)) (inv_matrix f u x y))
+    (forall ((x S) (y S)) (inv_matrix f (u x) (u y) x y))
 
     ; (safe f u)
     (forall ((x S) (y S)) (=> (and (u x) (u y)) (= x y)))
