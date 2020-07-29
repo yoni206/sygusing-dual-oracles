@@ -40,8 +40,60 @@ DEMO_SMTLIB=\
 
 """
 
+def printer(f):
+    cur = f
+    prefixes = []
+    clauses = []
+    prenex_f = prenex_normal_form(f)
+    cur = prenex_f
+    while cur.is_quantifier():
+      prefix = (cur.node_type(), cur.quantifier_vars())
+      prefixes.append(prefix)
+      cur = cur.args()[0]
+    body = cur
+    old_vars = body.get_free_variables()
+    body = cnf(body)
+    new_vars = body.get_free_variables()        
+    coding = {}
+    counter = 1
+    for new_var in new_vars:
+      coding[new_var] = str(counter)
+      counter = counter + 1
+    
+
+    fresh_vars = [v for v in new_vars if v not in old_vars]
+    prefixes.append((op.EXISTS, fresh_vars))
+    prefixes.insert(0,(op.EXISTS, prenex_f.get_free_variables()))
+
+    list_of_text_prefixes = []
+    for prefix in prefixes:
+      quantifier_letter = "a" if prefix[0] == op.FORALL else "e"
+      variables = [coding[v] for v in prefix[1]]
+      text_prefix = quantifier_letter + " " + " ".join(variables) + " 0"
+      list_of_text_prefixes.append(text_prefix)
+    
+    assert(body.is_and())
+    clauses = list(conjunctive_partition(body))
+    textual_clauses = []
+    for clause in clauses:
+      assert(clause.is_or() or clause.is_literal())
+      clause = list(disjunctive_partition(clause))
+      textual_clause = ""
+      for l in clause:
+        assert(l.is_literal())
+        if l.is_not():
+          textual_literal = "-" + coding[l.args()[0]]
+        else:
+          textual_literal = coding[l]
+        textual_clause += textual_literal + " "
+      textual_clauses.append(textual_clause + "0")
+    textual_text = "\n".join(list_of_text_prefixes) + "\n" + "\n".join(textual_clauses)
+    textual_text = "p cnf " + str(len(new_vars)) + " "  + str(len(textual_clauses)) + "\n" + textual_text 
+    print(textual_text)
+
+
+
 parser = SmtLibParser()
 script = parser.get_script(cStringIO(DEMO_SMTLIB))
 f = script.get_last_formula()
-printer = QBFPrinter(None, get_env())
-printer.printer(f)
+printer(f)
