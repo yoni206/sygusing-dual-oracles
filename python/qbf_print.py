@@ -69,7 +69,7 @@ def printer(f):
       textual_clauses.append(textual_clause + "0")
     textual_text = "\n".join(list_of_text_prefixes) + "\n" + "\n".join(textual_clauses)
     textual_text = "p cnf " + str(len(new_vars)) + " "  + str(len(textual_clauses)) + "\n" + textual_text 
-#    print("c " + repr({str(k): int(v) for k, v in coding.items()}))
+    print("c " + repr({str(k): int(v) for k, v in coding.items()}))
     print(textual_text)
 
 
