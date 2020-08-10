@@ -47,8 +47,11 @@ def printer(f):
 
     list_of_text_prefixes = []
     for prefix in prefixes:
-      quantifier_letter = "a" if prefix[0] == op.FORALL else "e"
       variables = [coding[v] for v in prefix[1]]
+      if not variables:
+          # skip if not binding anything
+          continue
+      quantifier_letter = "a" if prefix[0] == op.FORALL else "e"
       text_prefix = quantifier_letter + " " + " ".join(variables) + " 0"
       list_of_text_prefixes.append(text_prefix)
     
