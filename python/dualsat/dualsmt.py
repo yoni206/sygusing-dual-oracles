@@ -3,6 +3,10 @@ from pysmt.shortcuts import *
 import sys
 import os
 
+#######################################
+# handle input                        #    
+#######################################
+
 #input smtlib file
 path = sys.argv[1]
 
@@ -33,6 +37,10 @@ free_vars = smtlib_formula.get_free_variables()
 #(var, proof_clause_index, polarity) is assigned a variable which si true iff `var` occurrs in the `proof_clause_index` clause of the proof negatively or positively according to polarity (which is True or False, respectively)
 indicators = {(var, proof_clause_index, polarity) : Symbol(str(var) + "_is_in_clause_" + str(proof_clause_index) + "_of_proof_" + ("positively" if polarity else "negatively"), BOOL) for var in free_vars for proof_clause_index in range(proof_size) for polarity in {True, False}}
 
+
+#######################################
+# helper functions                    #
+#######################################
 
 def superset_of_union_minus_pivot(i,j,k,p):
   return And([Implies(Or(indicators[(v,j,polarity)], indicators[(v,k,polarity)]), indicators[(v,i,polarity)]) for v in free_vars for polarity in [True, False] if v != p])
@@ -82,6 +90,10 @@ def bottom_included():
 
 def is_proof_of_bottom():
   return And(is_proof(), bottom_included())
+
+###############################
+# The real thing              #
+###############################
 
 #compute the dual formula
 result = is_proof_of_bottom()
